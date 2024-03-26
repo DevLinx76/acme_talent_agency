@@ -5,6 +5,8 @@ const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/a
 const uuid = require('uuid');
 const bcrypt = require('bcrypt');
 
+client.connect();
+
 // Create Tables
 const createTables = async () => {
     const SQL = `
