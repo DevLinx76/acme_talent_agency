@@ -16,15 +16,15 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-app.get('/api/skills', async (req, res) => {
+app.get('/api/skills', async (req, res, next) => {
     try {
         res.send(await fetchSkills());
     } catch (ex) {
         next(ex);
     }
-} );
+});
 
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', async (req, res, next) => {
     try {
         res.send(await fetchUsers());
     } catch (ex) {
@@ -33,7 +33,7 @@ app.get('/api/users', async (req, res) => {
 }
 );
 
-app.post('/api/users', async (req, res) => {
+app.post('/api/users', async (req, res, next) => {
     try {
         res.send(await createUser(req.body));
     } catch (ex) {
@@ -42,7 +42,7 @@ app.post('/api/users', async (req, res) => {
 }
 );
 
-app.post('/api/users/:id/skills', async (req, res) => {
+app.post('/api/users/:id/skills', async (req, res, next) => {
     try {
         res.send(await createUserSkill(req.params.id, req.body));
     } catch (ex) {
@@ -51,7 +51,7 @@ app.post('/api/users/:id/skills', async (req, res) => {
 }
 );
 
-app.get('/api/users/:id/skills', async (req, res) => {
+app.get('/api/users/:id/skills', async (req, res, next) => {
     try {
         res.send(await fetchUserSkills(req.params.id));
     } catch (ex) {
@@ -60,9 +60,10 @@ app.get('/api/users/:id/skills', async (req, res) => {
 }
 );
 
-app.delete('/api/users/:id/skills', async (req, res) => {
+app.delete('/api/users/:id/skills', async (req, res, next) => {
     try {
-        res.send(await deleteUserSkill(req.params.id));
+        await deleteUserSkill({ user_id: req.params.userId, id: req.params.id });
+        res.sendStatus(204);
     } catch (ex) {
         next(ex);
     }
@@ -76,38 +77,38 @@ const init = async () => {
     await createTables();
     console.log('tables created');
     const [moe, lucy, larry, ethyl, dancing, singing, plateSpinning, juggling] = await Promise.all([
-        createUser({ name: 'Moe', password: 'moe_pw' }),
-        createUser({ name: 'Lucy', password: 'lucy_pw' }),
-        createUser({ name: 'Larry', password: 'larry_pw' }),
-        createUser({ name: 'Ethyl', password: 'ethyl_pw' }),
-        createSkill({ name: 'Dancing' }),
-        createSkill({ name: 'Singing' }),
-        createSkill({ name: 'Plate Spinning' }),
-        createSkill({ name: 'Juggling' })
-    ]);    
+        createUser({ name: 'moe', password: 'moe_pw' }),
+        createUser({ name: 'lucy', password: 'lucy_pw' }),
+        createUser({ name: 'larry', password: 'larry_pw' }),
+        createUser({ name: 'ethyl', password: 'ethyl_pw' }),
+        createSkill({ name: 'dancing' }),
+        createSkill({ name: 'singing' }),
+        createSkill({ name: 'plate Spinning' }),
+        createSkill({ name: 'juggling' })
+    ]);
 
     console.log(await fetchUsers());
     console.log(await fetchSkills());
 
     const userSkills = await Promise.all([
-        createUserSkill({ user_id: moe.id, skill_id: plateSpinning.id}),
-        createUserSkill({ user_id: moe.id, skill_id: dancing.id}),
-        createUserSkill({ user_id: ethyl.id, skill_id: singing.id}),
-        createUserSkill({ user_id: ethyl.id, skill_id: juggling.id})
-      ]);
-      console.log(await fetchUserSkills(moe.id));
-      await deleteUserSkill({ user_id: moe.id, id: userSkills[0].id});
-      console.log(await fetchUserSkills(moe.id));
-    
-      console.log(`curl localhost:3000/api/users/${ethyl.id}/userSkills`);
-    
-      console.log(`curl -X POST localhost:3000/api/users/${ethyl.id}/userSkills -d '{"skill_id": "${dancing.id}"}' -H 'Content-Type:application/json'`);
-      console.log(`curl -X DELETE localhost:3000/api/users/${ethyl.id}/userSkills/${userSkills[3].id}`);
-      
-      console.log('data seeded');
-    
-      const port = process.env.PORT || 3000;
-      app.listen(port, ()=> console.log(`listening on port ${port}`));
-    
-    }
-    init();
+        createUserSkill({ user_id: moe.id, skill_id: plateSpinning.id }),
+        createUserSkill({ user_id: lucy.id, skill_id: dancing.id }),
+        createUserSkill({ user_id: larry.id, skill_id: singing.id }),
+        createUserSkill({ user_id: ethyl.id, skill_id: juggling.id })
+    ]);
+    console.log(await fetchUserSkills(moe.id));
+    await deleteUserSkill({ user_id: moe.id, id: userSkills[0].id });
+    console.log(await fetchUserSkills(moe.id));
+
+    console.log(`curl localhost:3000/api/users/${ethyl.id}/userSkills`);
+
+    console.log(`curl -X POST localhost:3000/api/users/${ethyl.id}/userSkills -d '{"skill_id": "${dancing.id}"}' -H 'Content-Type:application/json'`);
+    console.log(`curl -X DELETE localhost:3000/api/users/${ethyl.id}/userSkills/${userSkills[3].id}`);
+
+    console.log('data seeded');
+
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => console.log(`listening on port ${port}`));
+
+}
+init();
